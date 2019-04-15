@@ -142,10 +142,10 @@ def search(search_string, trakt_type):
 def get_trakt_data(name, cat):
     """Get trakt list info"""
 
-    if cat == 'trending':
-        url = "https://api.trakt.tv/{}/{}/?limit=100&extended=full".format(name, cat)
-    else:
-        url = "https://api.trakt.tv/{}/{}/?limit={}&extended=full".format(name, cat, str(conf['trakt']['limit']))
+#    if cat == 'trending':
+#        url = "https://api.trakt.tv/{}/{}/?limit=100&extended=full".format(name, cat)
+#    else:
+    url = "https://api.trakt.tv/{}/{}/?limit={}&extended=full".format(name, cat, str(conf['trakt']['limit']))
 
     r = requests.get(url=url, headers=headers)
 
@@ -257,7 +257,7 @@ def get_info(arg):
 
         trakt_complete_tv = []
 
-        logger.info(trakt_temp_tv)
+#        logger.info(trakt_temp_tv)
         
         for trakt_list in trakt_temp_tv:
             for line in trakt_list:

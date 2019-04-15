@@ -16,7 +16,8 @@ from time import sleep
 ################################
 
 # Logging format
-formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+#formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(levelname)5s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
 
 # root logger
 logger = logging.getLogger()
@@ -46,7 +47,7 @@ configuration.load()
 conf = configuration.config
 
 # Print config file to log on run
-logger.info(json.dumps(conf, sort_keys=True, indent=4, separators=(',', ': ')))
+# logger.info(json.dumps(conf, sort_keys=True, indent=4, separators=(',', ': ')))
 
 # Log file handler
 fileHandler = RotatingFileHandler(configuration.settings['logfile'], maxBytes=1024 * 1024 * 2, backupCount=1)
@@ -406,7 +407,7 @@ def filter_list(list_type):
 if __name__ == "__main__":
     while True:
 
-        logger.info("\n\n###### Checking if TV lists are wanted ######\n")
+        logger.info("###### Checking if TV lists are wanted ######")
 
         if conf['sonarr']['api']:
             try:
@@ -417,7 +418,7 @@ if __name__ == "__main__":
             except requests.exceptions.ConnectionError:
                 logger.warning("Can not connect to Sonarr, check sonarr is running or host is correct")
 
-        logger.info("\n\n###### Checking if Movie lists are wanted ######\n")
+        logger.info("###### Checking if Movie lists are wanted ######")
 
         if conf['radarr']['api']:
             try:
