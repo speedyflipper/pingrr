@@ -1,4 +1,4 @@
-import pingrr.config as config
+import lib.config as config
 
 import json
 import logging
@@ -58,12 +58,12 @@ logger.addHandler(fileHandler)
 # Init
 ################################
 
-import pingrr.trakt as trakt
-import pingrr.sonarr as sonarr
+import lib.trakt as trakt
+import lib.sonarr as sonarr
 
-import pingrr.justWatch as justWatch
-import pingrr.radarr as radarr
-from pingrr.notifications import Notifications
+import lib.justWatch as justWatch
+import lib.radarr as radarr
+from lib.notifications import Notifications
 
 new = []
 delay_time = conf['pingrr']['timer'] * 3600
@@ -405,8 +405,6 @@ def filter_list(list_type):
     return filtered
 
 if __name__ == "__main__":
-    while True:
-
         logger.info("###### Checking if TV lists are wanted ######")
 
         if conf['sonarr']['api']:
@@ -440,7 +438,7 @@ if __name__ == "__main__":
             hours = "s"
         else:
             hours = ""
-
-        logger.info("check finish, sleeping for {} hour{}".format(conf['pingrr']['timer'], hours))
-        sleep(float(delay_time))
-        logger.debug('sleep over, checking again')
+        logger.info("check finish")
+#        logger.info("check finish, sleeping for {} hour{}".format(conf['pingrr']['timer'], hours))
+#        sleep(float(delay_time))
+#        logger.debug('sleep over, checking again')

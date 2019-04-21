@@ -2,7 +2,7 @@ import requests
 import logging
 import config
 import re
-import pingrr.trakt as trakt
+import lib.trakt as trakt
 
 from time import sleep
 
