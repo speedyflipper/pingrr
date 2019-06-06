@@ -26,7 +26,7 @@ def create_logger(name):
         logger.addHandler(consoleHandler)
         logging.getLogger("requests").setLevel(logging.WARNING)
         logger.setLevel(conf['pingrr']['log_level'])
-        fileHandler = RotatingFileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'logs', name[:-3] + '.log'), maxBytes=1024 * 1024 * 2, backupCount=1)
+        fileHandler = RotatingFileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'logs', name + '.log'), maxBytes=1024 * 1024 * 2, backupCount=1)
         fileHandler.setFormatter(formatter)
         logger.addHandler(fileHandler)
         return logger

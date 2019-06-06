@@ -51,5 +51,4 @@ def long_queue():
 
 
 Process(target=short_queue).start()
-#Process(target=long_queue).start()
-
+Process(target=long_queue).start()
