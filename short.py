@@ -18,23 +18,20 @@ def main():
 	for x in plex.sessions():
 		try:
 			logger.info("User: %s is watching %s" % (x.usernames[0], create_plex_title(x)))
-			(series, max_season, season_count) = sonarr_info_by_tvbdb(x.guid.split('/')[2])
-			if 2 in series['tags']:
-				logger.info("Checking  %s" % series['title'])
-				remaining_episodes = series['totalEpisodeCount'] - (series['seasons'][0]['statistics']['totalEpisodeCount'] if series['seasons'][0]['seasonNumber'] == 0 else 0) - series['episodeCount']
-				if remaining_episodes > 0:
-					x = update_show(series, max_season, season_count, x.index)
-					x = 0
-					if x > 0:
-						sdr.command({'name':'SeriesSearch', 'seriesId':show['id']})
-						logger.info("%s Episodes for %s changed to monitor, sending search command" % (x, show['title']))
-				else:
-					logger.info("Monitoring All Episodes for %s" % show['title'])
-
-			else:
-				logger.info("Show: %s is Not Ombi" % series['title'])
+			if x.type == "episode":
+				(series, max_season, season_count) = sonarr_info_by_tvbdb(x.guid.split('/')[2])
+				if 2 in series['tags']:
+					remaining_episodes = series['totalEpisodeCount'] - (series['seasons'][0]['statistics']['totalEpisodeCount'] if series['seasons'][0]['seasonNumber'] == 0 else 0) - series['episodeCount']
+					if remaining_episodes > 0:
+						x = update_show(series, max_season, season_count, x.index)
+						x = 0
+						if x > 0:
+							sdr.command({'name':'SeriesSearch', 'seriesId':show['id']})
+							logger.info("%s Episodes for %s changed to monitor, sending search command" % (x, show['title']))
+					else:
+						logger.info("Monitoring All Episodes for %s" % show['title'])
 		except:
-			logger.info("Show Not Found in Sonarr")
+			logger.error("Show Not Found in Sonarr")
 			pass
 
 def create_plex_title(video):
