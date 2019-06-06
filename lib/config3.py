@@ -4,6 +4,8 @@ import sys
 import os
 import json
 import requests
+from logging.handlers import RotatingFileHandler
+
 
 ################################
 # Logging
@@ -14,6 +16,20 @@ logger = logging.getLogger(__name__)
 ################################
 # Config class
 ################################
+
+def create_logger(name):
+        formatter = logging.Formatter('%(asctime)s - %(levelname)5s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+        consoleHandler = logging.StreamHandler(sys.stdout)
+        consoleHandler.setFormatter(formatter)
+        logger.addHandler(consoleHandler)
+        logging.getLogger("requests").setLevel(logging.WARNING)
+        logger.setLevel(conf['pingrr']['log_level'])
+        fileHandler = RotatingFileHandler(os.path.join(os.path.dirname(sys.argv[0]), 'logs', name[:-3] + '.log'), maxBytes=1024 * 1024 * 2, backupCount=1)
+        fileHandler.setFormatter(formatter)
+        logger.addHandler(fileHandler)
+        return logger
 
 
 class Singleton(type):

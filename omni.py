@@ -27,26 +27,34 @@ def check():
 
 	series = sdr.get_series()
 	for show in series:
-		tag_id = 0
-		if show['profileId'] == from_profile:
-			show['tags'] = [2]
-			show['qualityProfileId'] = to_profile
-			show['profileId'] = to_profile
-			show['monitored'] = True
-			for x in show['seasons']:
-				x['monitored'] = False
-			sdr.upd_series(show)
 		try:
-			tag_id = show['tags'][0]
-		except:
-			pass
+			tag_id = 0
+			if show['profileId'] == from_profile:
+				show['tags'] = [2]
+				show['qualityProfileId'] = to_profile
+				show['profileId'] = to_profile
+				show['monitored'] = True
+				for x in show['seasons']:
+					x['monitored'] = False
+				sdr.upd_series(show)
+			try:
+				tag_id = show['tags'][0]
+			except:
+				pass
 
-		if tag_id == 2:
-			logger.info("Starting %s" % show['title'])
-			x = check_episodes(sdr, show, users)
-			if x > 0:
-				sdr.command({'name':'SeriesSearch', 'seriesId':show['id']})
-				logger.info("%s Episodes for %s changed to monitor, sending search command" % (x, show['title']))
+			if tag_id == 2:
+				logger.info("Starting %s" % show['title'])
+				remaining_episodes = show['totalEpisodeCount'] - (show['seasons'][0]['statistics']['totalEpisodeCount'] if show['seasons'][0]['seasonNumber'] == 0 else 0) - show['episodeCount']
+				if remaining_episodes > 0:
+					x = check_episodes(sdr, show, users)
+					if x > 0:
+						sdr.command({'name':'SeriesSearch', 'seriesId':show['id']})
+						logger.info("%s Episodes for %s changed to monitor, sending search command" % (x, show['title']))
+				else:
+					logger.info("Monitoring All Episodes for %s" % show['title'])
+		except Exception as e:
+			logger.error('Error on line {}, {}. {}'.format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+
 
 def check_episodes(sdr, series, users):
 	all_episodes = sdr.get_episodes_by_series_id(series['id'])
@@ -59,12 +67,17 @@ def check_episodes(sdr, series, users):
 			if highest_season <= x['seasonNumber']:
 				highest_season = x['seasonNumber']
 
-		if highest_season == x['seasonNumber']: season_count = x['statistics']['totalEpisodeCount']
+		if highest_season == x['seasonNumber']:
+			season_count = x['statistics']['totalEpisodeCount']
+			
 
-	for episode in tqdm(all_episodes):
+	episode_count = 0
+	for episode in reversed(all_episodes):
+#		logger.info((series['title'], episode['seasonNumber'], episode['episodeNumber']))
 		if episode['seasonNumber'] == highest_season:
 			if episode['hasFile']:
-				for user in tqdm(users):
+				for user in users:
+#					logger.info("Checking User: %s" % user)
 					try:
 						plex_episode = get_episode(series['title'], episode['seasonNumber'], episode['episodeNumber'], user=user)
 						if not plex_episode: break
@@ -73,11 +86,13 @@ def check_episodes(sdr, series, users):
 						watch_indiv = False
 					except Exception as e:
 						logger.error('Error on line {}, {}, {}'.format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
+						watch_indiv = False
 
 					if watch_indiv:
 						watch = True
 						if last_watched<episode['episodeNumber']: last_watched = episode['episodeNumber']
 						break
+		if watch: break
 
 	max_season = highest_season
 	if last_watched < 3:
@@ -85,7 +100,7 @@ def check_episodes(sdr, series, users):
 	else:
 		max_episode = season_count
 
-	if (last_watched/season_count) >= .8:
+	if (last_watched/season_count) >= .75:
 		max_season+=1
 		max_episode=5
 	
@@ -103,7 +118,6 @@ def check_episodes(sdr, series, users):
 					monitor = True
 				elif episode['seasonNumber'] != max_season:
 					monitor = True
-		
 			if episode['monitored'] != monitor:
 				if monitor: num_changed+=1
 			episode['monitored'] = monitor
@@ -119,17 +133,23 @@ def check_episodes(sdr, series, users):
 
 def get_episode(series_title, season_number, episode_number, user):
 	try:
-		plex_temp = PlexServer(conf['plex']['host'], conf['plex']['api'])
-		if user != plex_temp.myPlexAccount().username:
-			plex_users = get_user_tokens(plex_temp.machineIdentifier)
-			token = plex_users[user]
-			plex_temp = PlexServer(conf['plex']['host'], token)
-		with  DisableLogger():
-			episode = plex_temp.library.section('TV Shows').searchShows(title=series_title)[0].episode(season=season_number, episode=episode_number)
-		
-		return episode
+		pause = 0
+		while True:
+			pause+=1
+			try:
+				plex_temp = PlexServer(conf['plex']['host'], conf['plex']['api'])
+				if user != plex_temp.myPlexAccount().username:
+					plex_users = get_user_tokens(plex_temp.machineIdentifier)
+					token = plex_users[user]
+					plex_temp = PlexServer(conf['plex']['host'], token)
+				with  DisableLogger():
+					episode = plex_temp.library.section('TV Shows').searchShows(title=series_title)[0].episode(season=season_number, episode=episode_number)
+				
+				return episode
+			except:
+				time.sleep(pause)
+				continue
 	except plexapi.exceptions.NotFound:
-#		logger.warn("Episode Not Found in Plex.")
 		return False
 	except Exception as e:
 		logger.error('Error on line {}, {}, {}'.format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
@@ -163,10 +183,8 @@ def get_selected_viewOffset(video):
 def get_user_tokens(server_id):
 	try:
 		headers = {'X-Plex-Token':  conf['plex']['api'], 'Accept': 'application/json'}
-		api_users = xmltodict.parse(requests.get('https://plex.tv/api/users', headers=headers, params={}, verify=False).content)
 		api_shared_servers = xmltodict.parse(requests.get('https://plex.tv/api/servers/{server_id}/shared_servers'.format(server_id=server_id), headers=headers, params={}, verify=False).content)
-		user_ids = {user['@id']: user.get('@username', user.get('@title')) for user in api_users['MediaContainer']['User']}
-		users = {user_ids[user['@userID']]: user['@accessToken'] for user in api_shared_servers['MediaContainer']['SharedServer']}
+		users = {'speedy' if not user['@username'] else user['@username']: user['@accessToken'] for user in api_shared_servers['MediaContainer']['SharedServer']}
 		return users
 	except Exception as e:
 		logger.error('Error on line {}, {}. {}'.format(sys.exc_info()[-1].tb_lineno, type(e).__name__, e))
