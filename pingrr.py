@@ -17,7 +17,7 @@ from time import sleep
 
 # Logging format
 #formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-formatter = logging.Formatter('%(asctime)s - %(levelname)5s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(levelname)10s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
 
 # root logger
 logger = logging.getLogger()

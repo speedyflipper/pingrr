@@ -17,8 +17,10 @@ logger = logging.getLogger(__name__)
 # Config class
 ################################
 
+DEBUG = True
+
 def create_logger(name):
-        formatter = logging.Formatter('%(asctime)s - %(levelname)5s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)10s - %(module)15s:%(funcName)30s:%(lineno)5s - %(message)s')
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
         consoleHandler = logging.StreamHandler(sys.stdout)

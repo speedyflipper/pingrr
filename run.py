@@ -2,7 +2,7 @@ import lib.config3 as config
 config.main()
 conf = config.conf
 import schedule, logging, sys, time, subprocess, os
-import omni, short
+import omni
 from multiprocessing import Process
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,8 @@ def short_queue():
 	try:
 		logger = config.create_logger('short')
 		logger.info("Creating Short Queue")
-		schedule.every(5).minutes.do(short.main)
+		schedule.every(5).minutes.do(omni.modify_new)
+		schedule.every(5).minutes.do(omni.session_search)
 		schedule.run_all()
 		while True:
 			try:
@@ -35,8 +36,7 @@ def long_queue():
 		logger.info("Creating Long Queue")
 
 		schedule.every(2).hours.do(run_pingrr)
-		schedule.every(2).hours.do(omni.check)
-		schedule.every(5).minutes.do(short.main)
+		schedule.every(12).hours.do(omni.full_check)
 		schedule.run_all()
 		while True:
 			try:
@@ -52,3 +52,6 @@ def long_queue():
 
 Process(target=short_queue).start()
 Process(target=long_queue).start()
+
+#logger = config.create_logger('manual')
+#omni.modify_new()
